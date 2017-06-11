@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Path;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -23,7 +22,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -127,7 +125,8 @@ public class MapsActivity extends AppCompatActivity implements
         //Displaying customized toolbar(app bar)
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         //Adding navigation drawer to the toolbar
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
@@ -245,8 +244,8 @@ public class MapsActivity extends AppCompatActivity implements
 
         if (savedInstanceState != null){
             mCameraPosition = savedInstanceState.getParcelable(CAMERA_POSITION);
-            srcMarkerOptions = ((MarkerOptions)savedInstanceState.getParcelable(SOURCE_MARKER_OPTIONS));
-            destMarkerOptions = ((MarkerOptions)savedInstanceState.getParcelable(DESTINATION_MARKER_OPTIONS));
+            srcMarkerOptions = savedInstanceState.getParcelable(SOURCE_MARKER_OPTIONS);
+            destMarkerOptions = savedInstanceState.getParcelable(DESTINATION_MARKER_OPTIONS);
             appFirstRun = false;
         }
 
@@ -396,9 +395,7 @@ public class MapsActivity extends AppCompatActivity implements
                 cleanPolylines();
                 Location loc = null;
                 try{
-                    //loc = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    if (loc == null)
-                        loc = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    loc = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 }catch(SecurityException x){
                     Toast.makeText(getApplicationContext(),
                             R.string.location_disallowed, Toast.LENGTH_LONG).show();
@@ -439,10 +436,9 @@ public class MapsActivity extends AppCompatActivity implements
         });
 
         //Initialize the app with a Marker on user's location if possible
-        if (appFirstRun == true)
+        if (appFirstRun)
         {
             mLocationButton.performClick();
-            Log.d("abd", "MlocationButton perform click()");
 
         }
         else //Retaining the map state on a screen orientation change
