@@ -4,7 +4,9 @@
     <string name="open">Open</string>
     <string name="close">Close</string>
     <string name="join_community">Please Join a community first</string>
-    <string name="gps_disabled">GPS must be enabled</string>
+    <string name="unavailable_location">Unable to find location</string>
+    <string name="turn_gps_on">Turn on your GPS!</string>
+    <string name="gps_disabled">GPS Disabled</string>
     <string name="finding_direction">Finding direction..!</string>
     <string name="please_wait">Please wait</string>
     <string name="date_picker_title">Set date time</string>

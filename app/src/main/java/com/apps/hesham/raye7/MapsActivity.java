@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -66,17 +67,20 @@ public class MapsActivity extends AppCompatActivity implements
         TimePickerFragment.OnTimeSetListener,
         DatePickerFragment.OnDateSetListener{
 
-    private static final String TAG = "myMap";
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
     private static final String DIALOG_ROUTE = "DialogRoute";
 
-    private static final String SOURCE_MARKER_OPTIONS = "SourceMarkerOptions";
-    private static final String DESTINATION_MARKER_OPTIONS = "DestinationMarkerOptions";
-    private static final String CAMERA_POSITION = "CameraPosition";
-    private static final String FIRST_APP_RUN = "FirstAppRun";
+    private static final String KEY_SOURCE_MARKER_OPTIONS = "SourceMarkerOptions";
+    private static final String KEY_DESTINATION_MARKER_OPTIONS = "DestinationMarkerOptions";
+    private static final String KEY_CAMERA_POSITION = "CameraPosition";
+    private static final String KEY_BUNDLE_IS_NULL = "BundleIsNull";
+    private static final String KEY_TIME = "Time";
+    private static final String KEY_DATE = "Date";
+
     private static final int REQUEST_CODE_AUTOCOMPLETE_SRC = 1;
     private static final int REQUEST_CODE_AUTOCOMPLETE_DEST = 2;
+    private static final int REQUEST_CODE_LOCATION_PERMISSION = 3;
 
     private GoogleMap mMap;
     private Toolbar toolbar;
@@ -87,7 +91,7 @@ public class MapsActivity extends AppCompatActivity implements
     private String destLatLng;
 
     private LocationManager mLocationManager;
-    private MyLocationListener mLocationListener;
+    private LocationListener locationListener;
     private Marker sourceMarker;
     private Marker destinationMarker;
 
@@ -111,10 +115,9 @@ public class MapsActivity extends AppCompatActivity implements
     private ProgressDialog progressDialog;
 
     private CameraPosition mCameraPosition;
-    private boolean appFirstRun = true;
+    private boolean bundleIsNull = true;
     private MarkerOptions srcMarkerOptions;
     private MarkerOptions destMarkerOptions;
-
 
 
     @Override
@@ -226,27 +229,13 @@ public class MapsActivity extends AppCompatActivity implements
             }
         });
 
-
-        //Requesting permissions for different devices
-        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mLocationListener = new MyLocationListener();
-        if (Build.VERSION.SDK_INT < 23) {
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, mLocationListener);
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // ask for permission
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            } else {
-                // we have permission already
-                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, mLocationListener);
-            }
-        }
-
         if (savedInstanceState != null){
-            mCameraPosition = savedInstanceState.getParcelable(CAMERA_POSITION);
-            srcMarkerOptions = savedInstanceState.getParcelable(SOURCE_MARKER_OPTIONS);
-            destMarkerOptions = savedInstanceState.getParcelable(DESTINATION_MARKER_OPTIONS);
-            appFirstRun = false;
+            mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
+            srcMarkerOptions = savedInstanceState.getParcelable(KEY_SOURCE_MARKER_OPTIONS);
+            destMarkerOptions = savedInstanceState.getParcelable(KEY_DESTINATION_MARKER_OPTIONS);
+            dateButton.setText(savedInstanceState.getString(KEY_DATE));
+            timeButton.setText(savedInstanceState.getString(KEY_TIME));
+            bundleIsNull = false;
         }
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -254,15 +243,7 @@ public class MapsActivity extends AppCompatActivity implements
         mapFragment.getMapAsync(this);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, mLocationListener);
-        }
-    }
 
     //Using Google Places API to retrieve search suggestions
     private void startAutoCompleteActvity(int REQUEST_CODE, String currentText) {
@@ -275,7 +256,6 @@ public class MapsActivity extends AppCompatActivity implements
             e.printStackTrace();
         }
     }
-
 
     //Helper function
     private void setupBadge(TextView badge, int count){
@@ -293,7 +273,7 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
-    //Menu Inflating
+    //Menu Inflation
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -346,13 +326,14 @@ public class MapsActivity extends AppCompatActivity implements
                 startActivity(intent);
                 return true;
             //On receiving a message or a notification the count variable should be incremented
-            //for both notification badge and message badge
+            //for both: notification badge and message badge
 
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    //saving map state
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -363,7 +344,7 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(sourceMarker.getPosition())
                     .draggable(false)
                     .icon(BitmapDescriptorFactory.defaultMarker(HUE_RED));
-            outState.putParcelable(SOURCE_MARKER_OPTIONS, sourceOptions);
+            outState.putParcelable(KEY_SOURCE_MARKER_OPTIONS, sourceOptions);
         }
         if (destinationMarker != null){
             MarkerOptions destinationOptions = new MarkerOptions()
@@ -371,18 +352,128 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(destinationMarker.getPosition())
                     .draggable(false)
                     .icon(BitmapDescriptorFactory.defaultMarker(HUE_GREEN));
-            outState.putParcelable(DESTINATION_MARKER_OPTIONS, destinationOptions);
+            outState.putParcelable(KEY_DESTINATION_MARKER_OPTIONS, destinationOptions);
         }
-        outState.putParcelable(CAMERA_POSITION,mMap.getCameraPosition());
-        outState.putBoolean(FIRST_APP_RUN, appFirstRun);
+
+        outState.putString(KEY_DATE, dateButton.getText().toString());
+        outState.putString(KEY_TIME, timeButton.getText().toString());
+        outState.putParcelable(KEY_CAMERA_POSITION,mMap.getCameraPosition());
+        outState.putBoolean(KEY_BUNDLE_IS_NULL, bundleIsNull);
+    }
+
+    //Initializing the application with the current location
+    private void initializeWithCurrentLocation(){
+        Location lastKnownLocation = null;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            lastKnownLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        if (lastKnownLocation != null){
+            LatLng position = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+            String address = getAddress(position);
+            srcEditText.setText(address);
+            //srcLatLng = position.toString();
+            srcLatLng = String.valueOf(position.latitude) + "," + String.valueOf(position.longitude);
+            if (sourceMarker != null){
+                sourceMarker.remove();
+            }
+            sourceMarker = mMap.addMarker(new MarkerOptions().position(position).title(address).draggable(false));
+            sourceMarker.showInfoWindow();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,13));
+        } else {
+            if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                Toast.makeText(getApplicationContext(),
+                        getString(R.string.unavailable_location)+
+                                ", " + getString(R.string.turn_gps_on)
+                        , Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getApplicationContext(), R.string.unavailable_location, Toast.LENGTH_SHORT).show();
+            }
+        }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION)
+        {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+                {
+                    mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, locationListener);
+                    initializeWithCurrentLocation();
+                }
+            }
+        }
+
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationListener  = new LocationListener(){
+            @Override
+            public void onLocationChanged(Location location) {}
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            @Override
+            public void onProviderEnabled(String provider) {
+                if (sourceMarker != null){
+                    initializeWithCurrentLocation();
+                }
+
+            }
+            @Override
+            public void onProviderDisabled(String provider) {}
+        };
+
+        //Requesting permissions for different devices
+        if (Build.VERSION.SDK_INT < 23) {
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, locationListener);
+            initializeWithCurrentLocation();
+        }
+        else
+        {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // ask for permission
+                ActivityCompat.requestPermissions
+                        (this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION_PERMISSION);
+            } else {
+                // we have permission already
+                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, locationListener);
+
+                //Initialize the app with a Marker on user's location if possible
+                initializeWithCurrentLocation();
+            }
+        }
+
         //Showing traffic on map
         mMap.setTrafficEnabled(true);
+
+        if (!bundleIsNull)   //Retaining the map state on a screen orientation change
+        {
+            if (srcMarkerOptions != null){
+                sourceMarker = mMap.addMarker(srcMarkerOptions);
+                srcLatLng = String.valueOf(sourceMarker.getPosition().latitude) + ","
+                        + String.valueOf(sourceMarker.getPosition().longitude);
+            }
+            if (destMarkerOptions != null){
+                destinationMarker = mMap.addMarker(destMarkerOptions);
+                destLatLng = String.valueOf(destinationMarker.getPosition().latitude) + ","
+                        + String.valueOf(destinationMarker.getPosition().longitude);
+            }
+
+            onComplete();
+            if (mCameraPosition != null){
+                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
+            }
+        }
 
         //Location Button
         mLocationButton = (Button) findViewById(R.id.locationButton);
@@ -406,11 +497,14 @@ public class MapsActivity extends AppCompatActivity implements
                     srcEditText.setText(address);
                     //srcLatLng = position.toString();
                     srcLatLng = String.valueOf(position.latitude) + "," + String.valueOf(position.longitude);
+                    if (sourceMarker != null){
+                        sourceMarker.remove();
+                    }
                     sourceMarker = mMap.addMarker(new MarkerOptions().position(position).title(address).draggable(false));
                     sourceMarker.showInfoWindow();
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,13));
                 } else {
-                    Toast.makeText(getApplicationContext(), R.string.gps_disabled, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), R.string.unavailable_location, Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -434,31 +528,6 @@ public class MapsActivity extends AppCompatActivity implements
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,13));
             }
         });
-
-        //Initialize the app with a Marker on user's location if possible
-        if (appFirstRun)
-        {
-            mLocationButton.performClick();
-
-        }
-        else //Retaining the map state on a screen orientation change
-        {
-            if (srcMarkerOptions != null){
-                sourceMarker = mMap.addMarker(srcMarkerOptions);
-                srcLatLng = String.valueOf(sourceMarker.getPosition().latitude) + ","
-                        + String.valueOf(sourceMarker.getPosition().longitude);
-            }
-            if (destMarkerOptions != null){
-                destinationMarker = mMap.addMarker(destMarkerOptions);
-                destLatLng = String.valueOf(destinationMarker.getPosition().latitude) + ","
-                        + String.valueOf(destinationMarker.getPosition().longitude);
-            }
-
-            onComplete();
-            if (mCameraPosition != null){
-                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
-            }
-        }
 
     }
 
