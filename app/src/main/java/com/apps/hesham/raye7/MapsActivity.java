@@ -368,17 +368,17 @@ public class MapsActivity extends AppCompatActivity implements
             lastKnownLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
         if (lastKnownLocation != null){
-            LatLng position = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-            String address = getAddress(position);
-            srcEditText.setText(address);
-            //srcLatLng = position.toString();
-            srcLatLng = String.valueOf(position.latitude) + "," + String.valueOf(position.longitude);
             if (sourceMarker != null){
-                sourceMarker.remove();
+                LatLng position = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                String address = getAddress(position);
+                srcEditText.setText(address);
+                //srcLatLng = position.toString();
+                srcLatLng = String.valueOf(position.latitude) + "," + String.valueOf(position.longitude);
+                sourceMarker = mMap.addMarker(new MarkerOptions().position(position).title(address).draggable(false));
+                sourceMarker.showInfoWindow();
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,13));
             }
-            sourceMarker = mMap.addMarker(new MarkerOptions().position(position).title(address).draggable(false));
-            sourceMarker.showInfoWindow();
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,13));
+
         } else {
             if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
                 Toast.makeText(getApplicationContext(),
