@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!--<item-->
+        <!--android:title="Notification"-->
+        <!--android:icon="@drawable/ic_menu_notification"-->
+        <!--android:id="@+id/action_notif"-->
+        <!--app:showAsAction="always"-->
+        <!--/>-->
+    <!--<item-->
+        <!--android:title="Messages"-->
+        <!--android:icon="@drawable/ic_menu_msg"-->
+        <!--android:id="@+id/action_msgs"-->
+        <!--app:showAsAction="always"-->
+        <!--/>-->
+    <item
+        android:id="@+id/action_notif"
+        android:icon="@drawable/ic_menu_notification"
+        android:title="Notifications"
+        app:actionLayout="@layout/custom_notification_action_layout"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_msgs"
+        android:icon="@drawable/ic_menu_msg"
+        android:title="Messages"
+        app:actionLayout="@layout/custom_message_action_layout"
+        app:showAsAction="always"/>
+</menu>

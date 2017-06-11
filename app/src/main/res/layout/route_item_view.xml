@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    android:layout_margin="10dp"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+    <LinearLayout
+        android:layout_margin="10dp"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <TextView
+            android:id="@+id/durationTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:hint="16 Minutes"
+            android:textColor="#007f00"
+            android:textColorHint="#007f00"
+            android:layout_marginBottom="4dp"/>
+        <TextView
+            android:id="@+id/routeNameTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textColorHint="#000000"/>
+        <TextView
+            android:id="@+id/posTextView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            />
+        <TextView
+            android:id="@+id/distanceTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="8.6 Kilometers"/>
+    </LinearLayout>
+</android.support.v7.widget.CardView>

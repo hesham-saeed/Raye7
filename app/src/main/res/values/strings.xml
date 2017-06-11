@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Raye7</string>
+    <string name="title_activity_maps">Raye7</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
+    <string name="join_community">Please Join a community first</string>
+    <string name="gps_disabled">GPS must be enabled</string>
+    <string name="finding_direction">Finding direction..!</string>
+    <string name="please_wait">Please wait</string>
+    <string name="date_picker_title">Set date time</string>
+    <string name="time_picker_title">Set trip time</string>
+    <string name="route_picker_title">Select route</string>
+    <string name="empty_source">Please enter source address!</string>
+    <string name="empty_destination">Please enter destination address!</string>
+    <string name="location_disallowed">You did not allow accessing current location</string>
+    <string name="no_messages">No messages found</string>
+    <string name="no_notifications">No notifications found</string>
+    <string name="request_a_pickup">REQUEST A PICKUP</string>
+    <string name="take_my_car">TAKE MY CAR</string>
+    <string name="from">FROM</string>
+    <string name="to">TO</string>
+    <string name="date">DATE</string>
+    <string name="time">TIME</string>
+    <string name="find_route">FIND ROUTE</string>
+    <string name="zero">0</string>
+    <string name="check_src_dest">Empty source or destination!</string>
+</resources>
